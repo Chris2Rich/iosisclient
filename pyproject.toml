@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "iosisclient"
-version = "0.0.1"
+version = "1.0.0"
 description = "Thin Python client for the Iosis cloud API"
 readme = "README.md"
 license = {text = "MIT"}
