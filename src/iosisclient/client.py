@@ -118,6 +118,9 @@ class IosisClient:
     def list_tsfns(self):
         return self._request("GET", "/api/tsfns")
 
+    def get_strategy_schema(self):
+        return self._request("GET", "/api/schema/strategy")
+
     def render_graph(self, yaml):
         raw = self._request(
             "POST",
