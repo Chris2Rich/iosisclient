@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=65", "wheel"]
+requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,7 +7,7 @@ name = "iosissdk"
 version = "0.1.0"
 description = "Thin Python client for the Iosis cloud API"
 readme = "README.md"
-license = "MIT"
+license = {text = "MIT"}
 requires-python = ">=3.11,<3.14"
 keywords = ["iosis", "api", "quantitative-finance", "time-series", "strategy"]
 classifiers = [
