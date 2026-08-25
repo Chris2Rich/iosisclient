@@ -3,8 +3,8 @@ requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "iosissdk"
-version = "0.0.2"
+name = "iosisclient"
+version = "0.0.1"
 description = "Thin Python client for the Iosis cloud API"
 readme = "README.md"
 license = {text = "MIT"}
@@ -23,14 +23,14 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://tryiosis.vercel.app"
-Repository = "https://github.com/iosis/iosissdk"
+Repository = "https://github.com/Chris2Rich/iosisclient"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["iosissdk*"]
+include = ["iosisclient*"]
 namespaces = false
 
 [tool.ruff]

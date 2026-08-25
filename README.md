@@ -1,9 +1,9 @@
-# iosissdk
+# iosisClient
 
 Thin Python client for the [Iosis](https://tryiosis.vercel.app) cloud API. Zero dependencies, stdlib only.
 
 ```bash
-pip install iosissdk
+pip install iosisclient
 ```
 
 ## Setup
@@ -11,7 +11,7 @@ pip install iosissdk
 Get an API key at [tryiosis.vercel.app](https://tryiosis.vercel.app) (Billing page, API keys section).
 
 ```python
-from iosissdk import IosisClient
+from iosisclient import IosisClient
 
 # reads IOSIS_API_KEY from environment
 client = IosisClient()
@@ -168,7 +168,7 @@ with open("graph.svg", "w") as f:
 API errors raise `IosisError` with `.status`, `.code`, and `.message`:
 
 ```python
-from iosissdk import IosisError
+from iosisclient import IosisError
 
 try:
     client.get_run("bad-id")
