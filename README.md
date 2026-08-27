@@ -100,6 +100,8 @@ datasets = client.list_datasets()
 
 **Endpoint:** `GET /api/datasets`
 
+The `name` field from these results can be used directly as the `path` parameter in `source.parquet` nodes in strategy YAML (see Strategy Format below).
+
 ### `list_dataset_manifests()`
 
 List datasets with full manifests (schema, row count, resolution, coverage window, S3 location):
