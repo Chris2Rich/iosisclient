@@ -1,3 +1,15 @@
-from iosisclient.client import IosisClient, IosisError
+from iosisclient.client import (
+    Artifact,
+    DatasetManifest,
+    IosisClient,
+    IosisError,
+    RunResult,
+)
 
-__all__ = ["IosisClient", "IosisError"]
+__all__ = [
+    "Artifact",
+    "DatasetManifest",
+    "IosisClient",
+    "IosisError",
+    "RunResult",
+]
