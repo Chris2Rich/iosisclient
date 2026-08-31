@@ -23,7 +23,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://tryiosis.vercel.app"
-Repository = "https://github.com/Chris2Rich/iosisclient"
+Repository = "https://github.com/iosis-quant/iosisclient"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
