@@ -13,7 +13,7 @@ from typing import Any, Callable
 
 
 class IosisError(Exception):
-    def __init__(self, status, body):
+    def __init__(self, status: int, body: dict[str, Any]):
         self.status = status
         self.code = body.get("error", "unknown")
         self.message = body.get("message", "")
@@ -68,216 +68,146 @@ class DatasetManifest:
         )
 
 
+def _check_api_key(api_key: str | None) -> str:
+    if not api_key:
+        raise ValueError(
+            "No API key. Pass api_key= or set IOSIS_API_KEY."
+        )
+    return api_key
+
+
 class IosisClient:
-    def __init__(
-        self,
-        api_key=None,
-        base_url=None,
-        *,
-        max_retries: int = 3,
-        retry_base_delay: float = 1.0,
-        retry_max_delay: float = 30.0,
-    ):
-        self.api_key = api_key or os.environ.get("IOSIS_API_KEY")
-        if not self.api_key:
-            raise ValueError(
-                "No API key provided. Pass api_key= or set IOSIS_API_KEY."
-            )
+    def __init__(self, api_key: str | None = None, base_url: str | None = None):
+        self.api_key = _check_api_key(
+            api_key or os.environ.get("IOSIS_API_KEY")
+        )
         self.base_url = (
             base_url
             or os.environ.get("IOSIS_BASE_URL")
             or "https://tryiosis.vercel.app"
         ).rstrip("/")
-        self.max_retries = max_retries
-        self.retry_base_delay = retry_base_delay
-        self.retry_max_delay = retry_max_delay
 
-    def _request(
-        self,
-        method,
-        path,
-        body=None,
-        content_type=None,
-        headers=None,
-        *,
-        timeout: float = 60.0,
-    ):
+    def _get(self, path: str) -> Any:
         url = f"{self.base_url}{path}"
-        req_headers = {
-            "Authorization": f"Bearer {self.api_key}",
-        }
-        if content_type:
-            req_headers["Content-Type"] = content_type
+        req = urllib.request.Request(
+            url, headers={"Authorization": f"Bearer {self.api_key}"}
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = resp.read()
+                ct = resp.headers.get("Content-Type", "")
+                if "application/json" in ct or "text/json" in ct:
+                    return json.loads(data)
+                return data
+        except urllib.error.HTTPError as e:
+            try:
+                err_body = json.loads(e.read())
+            except Exception:
+                err_body = {"error": "http_error", "message": str(e)}
+            raise IosisError(e.code, err_body) from None
+        except (urllib.error.URLError, OSError) as e:
+            raise IosisError(
+                0, {"error": "network_error", "message": str(e)}
+            ) from None
+
+    def _post(
+        self, path: str, body: bytes, content_type: str, headers: dict[str, str] | None = None
+    ) -> Any:
+        url = f"{self.base_url}{path}"
+        req_headers = {"Authorization": f"Bearer {self.api_key}"}
         if headers:
             req_headers.update(headers)
-
-        for attempt in range(self.max_retries + 1):
-            req = urllib.request.Request(
-                url, data=body, headers=req_headers, method=method
-            )
-            try:
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    data = resp.read()
-                    ct = resp.headers.get("Content-Type", "")
-                    if "application/json" in ct or "text/json" in ct:
-                        return json.loads(data)
-                    return data
-            except urllib.error.HTTPError as e:
-                if e.code >= 500 and attempt < self.max_retries:
-                    delay = min(
-                        self.retry_base_delay * (2 ** attempt),
-                        self.retry_max_delay,
-                    )
-                    time.sleep(delay)
-                    continue
-                try:
-                    err_body = json.loads(e.read())
-                except Exception:
-                    err_body = {"error": "http_error", "message": str(e)}
-                raise IosisError(e.code, err_body) from None
-            except (urllib.error.URLError, OSError) as e:
-                if attempt < self.max_retries:
-                    delay = min(
-                        self.retry_base_delay * (2 ** attempt),
-                        self.retry_max_delay,
-                    )
-                    time.sleep(delay)
-                    continue
-                raise IosisError(
-                    0,
-                    {"error": "network_error", "message": str(e)},
-                ) from None
-        raise IosisError(
-            0,
-            {"error": "max_retries", "message": f"Failed after {self.max_retries} retries"},
+        req = urllib.request.Request(
+            url, data=body, headers=req_headers, method="POST"
         )
-
-    def _request_raw(self, method, path, *, timeout: float = 60.0):
-        url = f"{self.base_url}{path}"
-        req_headers = {
-            "Authorization": f"Bearer {self.api_key}",
-        }
-        for attempt in range(self.max_retries + 1):
-            req = urllib.request.Request(
-                url, headers=req_headers, method=method
-            )
+        req.add_header("Content-Type", content_type)
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = resp.read()
+                ct = resp.headers.get("Content-Type", "")
+                if "application/json" in ct or "text/json" in ct:
+                    return json.loads(data)
+                return data
+        except urllib.error.HTTPError as e:
             try:
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    return resp.read(), resp.headers.get("Content-Type", "")
-            except urllib.error.HTTPError as e:
-                if e.code >= 500 and attempt < self.max_retries:
-                    delay = min(
-                        self.retry_base_delay * (2 ** attempt),
-                        self.retry_max_delay,
-                    )
-                    time.sleep(delay)
-                    continue
-                try:
-                    err_body = json.loads(e.read())
-                except Exception:
-                    err_body = {"error": "http_error", "message": str(e)}
-                raise IosisError(e.code, err_body) from None
-            except (urllib.error.URLError, OSError) as e:
-                if attempt < self.max_retries:
-                    delay = min(
-                        self.retry_base_delay * (2 ** attempt),
-                        self.retry_max_delay,
-                    )
-                    time.sleep(delay)
-                    continue
-                raise IosisError(
-                    0,
-                    {"error": "network_error", "message": str(e)},
-                ) from None
-        raise IosisError(
-            0,
-            {"error": "max_retries", "message": f"Failed after {self.max_retries} retries"},
-        )
+                err_body = json.loads(e.read())
+            except Exception:
+                err_body = {"error": "http_error", "message": str(e)}
+            raise IosisError(e.code, err_body) from None
+        except (urllib.error.URLError, OSError) as e:
+            raise IosisError(
+                0, {"error": "network_error", "message": str(e)}
+            ) from None
 
-    def _yaml_body(self, yaml):
+    def _yaml_body(self, yaml: str | Path) -> bytes:
         p = str(yaml)
         if os.path.isfile(p):
-            with open(p, "rb") as f:
-                return f.read()
+            return Path(p).read_bytes()
         return p.encode("utf-8")
 
-    def submit_run(self, yaml, idempotency_key=None) -> RunResult:
-        headers = {}
-        if idempotency_key:
-            headers["Idempotency-Key"] = idempotency_key
-        else:
-            headers["Idempotency-Key"] = str(uuid.uuid4())
-
-        result = self._request(
-            "POST",
+    def submit_run(self, yaml: str | Path, idempotency_key: str | None = None) -> RunResult:
+        key = idempotency_key or str(uuid.uuid4())
+        result = self._post(
             "/api/runs",
-            body=self._yaml_body(yaml),
-            content_type="application/yaml",
-            headers=headers,
+            self._yaml_body(yaml),
+            "application/yaml",
+            {"Idempotency-Key": key},
         )
         return RunResult.from_dict(result)
 
-    def get_run(self, run_id) -> RunResult:
-        result = self._request("GET", f"/api/runs/{run_id}")
-        return RunResult.from_dict(result)
+    def get_run(self, run_id: str) -> RunResult:
+        return RunResult.from_dict(self._get(f"/api/runs/{run_id}"))
 
     def wait_for_run(
         self,
-        run_id,
-        max_wait=300,
-        initial_delay=2,
-        max_delay=30,
+        run_id: str,
+        max_wait: float = 300,
+        initial_delay: float = 2,
+        max_delay: float = 30,
         *,
         on_status: Callable[[str], None] | None = None,
     ) -> RunResult:
         delay = initial_delay
         elapsed = 0.0
-        last_status = None
+        last_status: str | None = None
         while elapsed < max_wait:
             run = self.get_run(run_id)
-            status = run.status
-            if status != last_status:
-                last_status = status
+            if run.status != last_status:
+                last_status = run.status
                 if on_status is not None:
-                    on_status(status)
-            if status in ("succeeded", "failed"):
+                    on_status(run.status)
+            if run.status in ("succeeded", "failed"):
                 return run
             time.sleep(delay)
             elapsed += delay
             delay = min(delay * 2, max_delay)
-        raise TimeoutError(
-            f"Run {run_id} did not complete within {max_wait}s"
-        )
+        raise TimeoutError(f"Run {run_id} did not complete within {max_wait}s")
 
-    def get_charts(self, run_id):
-        return self._request("GET", f"/api/runs/{run_id}/charts")
+    def get_charts(self, run_id: str) -> Any:
+        return self._get(f"/api/runs/{run_id}/charts")
 
-    def list_datasets(self):
-        return self._request("GET", "/api/datasets")
+    def list_datasets(self) -> Any:
+        return self._get("/api/datasets")
 
-    def list_dataset_manifests(self):
-        return self._request("GET", "/api/datasets/manifest")
+    def list_dataset_manifests(self) -> Any:
+        return self._get("/api/datasets/manifest")
 
-    def lookup_dataset(self, name, version="latest"):
+    def lookup_dataset(self, name: str, version: str = "latest") -> Any:
         name_enc = urllib.parse.quote(name, safe="")
         ver_enc = urllib.parse.quote(version, safe="")
-        return self._request(
-            "GET",
-            f"/api/datasets/lookup?name={name_enc}&data_version={ver_enc}",
-        )
+        return self._get(f"/api/datasets/lookup?name={name_enc}&data_version={ver_enc}")
 
-    def list_tsfns(self):
-        return self._request("GET", "/api/tsfns")
+    def list_tsfns(self) -> Any:
+        return self._get("/api/tsfns")
 
-    def get_strategy_schema(self):
-        return self._request("GET", "/api/schema/strategy")
+    def get_strategy_schema(self) -> Any:
+        return self._get("/api/schema/strategy")
 
-    def render_graph(self, yaml, output_path=None):
-        svg = self._request(
-            "POST",
+    def render_graph(self, yaml: str | Path, output_path: str | Path | None = None) -> str:
+        svg = self._post(
             "/api/graphs/render",
-            body=self._yaml_body(yaml),
-            content_type="application/yaml",
+            self._yaml_body(yaml),
+            "application/yaml",
         )
         svg_str = svg.decode("utf-8") if isinstance(svg, bytes) else svg
         if output_path is not None:
@@ -288,8 +218,8 @@ class IosisClient:
 
     def download_artifacts(
         self,
-        run_id,
-        dest_dir,
+        run_id: str,
+        dest_dir: str | Path,
         *,
         chart_names: list[str] | None = None,
     ) -> list[Path]:
@@ -320,31 +250,18 @@ class IosisClient:
 
         return downloaded
 
-    def download_charts(self, run_id, dest_dir) -> list[Path]:
+    def download_charts(self, run_id: str, dest_dir: str | Path) -> list[Path]:
         return self.download_artifacts(run_id, dest_dir, chart_names=None)
 
-    def _download_url(self, url: str, dest: Path) -> Path:
-        for attempt in range(self.max_retries + 1):
-            try:
-                req = urllib.request.Request(url)
-                with urllib.request.urlopen(req, timeout=120) as resp:
-                    data = resp.read()
-                dest.parent.mkdir(parents=True, exist_ok=True)
-                dest.write_bytes(data)
-                return dest
-            except (urllib.error.URLError, OSError, urllib.error.HTTPError) as e:
-                if attempt < self.max_retries:
-                    delay = min(
-                        self.retry_base_delay * (2 ** attempt),
-                        self.retry_max_delay,
-                    )
-                    time.sleep(delay)
-                    continue
-                raise IosisError(
-                    getattr(e, "code", 0),
-                    {"error": "download_failed", "message": str(e)},
-                ) from None
-        raise IosisError(
-            0,
-            {"error": "max_retries", "message": f"Download failed after {self.max_retries} retries"},
-        )
+    def _download_url(self, url: str, dest: Path) -> None:
+        req = urllib.request.Request(url)
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                data = resp.read()
+        except (urllib.error.URLError, OSError, urllib.error.HTTPError) as e:
+            raise IosisError(
+                getattr(e, "code", 0),
+                {"error": "download_failed", "message": str(e)},
+            ) from None
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(data)
