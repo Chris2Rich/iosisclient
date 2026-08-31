@@ -47,9 +47,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_local.add_argument("-o", "--output", help="Write result to parquet file")
     run_local.add_argument(
         "--cache-dir",
-        type=Path,
+        type=str,
         default=None,
-        help="Directory for content-addressed node cache",
+        help="Cache directory or S3 URI (e.g. s3://bucket/cache)",
     )
     run_local.add_argument(
         "--no-cache",

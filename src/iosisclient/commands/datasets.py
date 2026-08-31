@@ -22,7 +22,7 @@ def datasets(args: object, config: Config) -> int:
             ds.get("name", ""),
             ds.get("version", ""),
             str(ds.get("row_count", "")),
-            ds.get("location", "")[:50],
+            ds.get("path", "")[:50],
         ])
-    print_table(rows, ["Name", "Version", "Rows", "Location"])
+    print_table(rows, ["Name", "Version", "Rows", "Path"])
     return 0

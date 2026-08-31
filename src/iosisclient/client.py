@@ -52,7 +52,7 @@ class DatasetManifest:
     name: str
     version: str
     id: str
-    location: str
+    path: str
     row_count: int
     schema: dict[str, Any] = field(default_factory=dict)
 
@@ -62,7 +62,7 @@ class DatasetManifest:
             name=data.get("name", ""),
             version=data.get("version", ""),
             id=data.get("id", ""),
-            location=data.get("location", ""),
+            path=data.get("path", ""),
             row_count=data.get("row_count", 0),
             schema=data.get("schema", {}),
         )
