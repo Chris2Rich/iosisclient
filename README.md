@@ -1,6 +1,6 @@
 # iosisClient
 
-Thin Python client for the [Iosis](https://tryiosis.vercel.app) API. Zero dependencies, stdlib only.
+Thin Python client for the [Iosis](https://tryiosis.vercel.app) API. The client module uses only stdlib; the package depends on `iosislib`.
 
 ```bash
 pip install iosisclient
