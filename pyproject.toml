@@ -7,7 +7,7 @@ name = "iosisclient"
 version = "2.2.0"
 description = "CLI and Python client for the Iosis strategy platform"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 requires-python = ">=3.11,<3.14"
 dependencies = [
     "iosislib",
