@@ -232,29 +232,31 @@ class IosisClient:
         chart_names: list[str] | None = None,
     ) -> list[Path]:
         run = self.get_run(run_id)
-        charts = run.run.get("charts", [])
-        if chart_names is not None:
-            charts = [c for c in charts if c.get("name") in chart_names]
+        artifacts = run.run.get("artifacts", [])
 
         dest = Path(dest_dir)
         dest.mkdir(parents=True, exist_ok=True)
         downloaded: list[Path] = []
 
-        result_location = run.run.get("result_location")
-        if result_location:
-            result_path = dest / "result.parquet"
-            self._download_url(result_location, result_path)
-            downloaded.append(result_path)
-
-        for chart in charts:
-            name = chart.get("name", "chart")
-            location = chart.get("location")
-            if not location:
+        for artifact in artifacts:
+            kind = artifact.get("kind", "")
+            name = artifact.get("name", "")
+            url = artifact.get("url", "")
+            if not url:
                 continue
-            filename = f"chart.{name}.svg" if name != "result" else "chart.svg"
-            chart_path = dest / filename
-            self._download_url(location, chart_path)
-            downloaded.append(chart_path)
+
+            if kind == "result":
+                filename = "result.parquet"
+            elif kind == "chart":
+                if chart_names is not None and name not in chart_names:
+                    continue
+                filename = name if name.endswith(".svg") else f"{name}.svg"
+            else:
+                continue
+
+            artifact_path = dest / filename
+            self._download_url(url, artifact_path)
+            downloaded.append(artifact_path)
 
         return downloaded
 

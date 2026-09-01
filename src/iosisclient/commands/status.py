@@ -23,11 +23,14 @@ def status(args: object, config: Config) -> int:
     print(f"Status: {run_result.status}")
 
     run_data = run_result.run
-    if "created_at" in run_data:
-        print(f"Created: {run_data['created_at']}")
-    if "result_location" in run_data:
-        print(f"Result:  {run_data['result_location']}")
-    if "error" in run_data:
+    if run_data.get("createdAt"):
+        print(f"Created: {run_data['createdAt']}")
+    if run_data.get("computeMs"):
+        print(f"Compute: {run_data['computeMs']}ms")
+    result = run_data.get("result")
+    if result and result.get("url"):
+        print(f"Result:  {result['url'][:80]}...")
+    if run_data.get("error"):
         print(f"Error:   {run_data['error']}")
 
     return 0
