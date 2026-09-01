@@ -1,6 +1,6 @@
 # iosisClient
 
-Thin Python client for the [Iosis](https://tryiosis.vercel.app) API. The client module uses only stdlib; the package depends on `iosislib`.
+Thin Python client for the [Iosis](https://iosis.dev) API. The client module uses only stdlib; the package depends on `iosislib`.
 
 ```bash
 pip install iosisclient
@@ -8,7 +8,7 @@ pip install iosisclient
 
 ## Setup
 
-Get an API key at [tryiosis.vercel.app](https://tryiosis.vercel.app) (Billing page, API keys section).
+Get an API key at [iosis.dev](https://iosis.dev) (Billing page, API keys section).
 
 ```python
 from iosisclient import IosisClient
@@ -26,7 +26,7 @@ client = IosisClient(base_url="http://localhost:3000")
 Environment variables:
 
 - `IOSIS_API_KEY` -- your API key
-- `IOSIS_BASE_URL` -- API base URL (defaults to `https://tryiosis.vercel.app`)
+- `IOSIS_BASE_URL` -- API base URL (defaults to `https://iosis.dev`)
 
 ---
 

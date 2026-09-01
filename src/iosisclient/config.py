@@ -33,7 +33,7 @@ def config_path() -> Path:
 @dataclass(frozen=True)
 class CloudConfig:
     api_key: str | None = None
-    base_url: str = "https://tryiosis.vercel.app"
+    base_url: str = "https://iosis.dev"
 
 
 @dataclass(frozen=True)
@@ -67,7 +67,7 @@ def load_config(path: Path | None = None) -> Config:
     base_url = (
         os.environ.get("IOSIS_BASE_URL")
         or cloud_raw.get("base_url")
-        or "https://tryiosis.vercel.app"
+        or "https://iosis.dev"
     )
 
     cache_dir = local_raw.get("cache_dir") or os.environ.get("IOSIS_CACHE_DIR")
@@ -84,11 +84,11 @@ def save_config(config: Config, path: Path | None = None) -> Path:
     p.parent.mkdir(parents=True, exist_ok=True)
 
     lines: list[str] = [f"default_mode = {config.default_mode!r}", ""]
-    if config.cloud.api_key or config.cloud.base_url != "https://tryiosis.vercel.app":
+    if config.cloud.api_key or config.cloud.base_url != "https://iosis.dev":
         lines.append("[cloud]")
         if config.cloud.api_key:
             lines.append(f'api_key = {config.cloud.api_key!r}')
-        if config.cloud.base_url != "https://tryiosis.vercel.app":
+        if config.cloud.base_url != "https://iosis.dev":
             lines.append(f'base_url = {config.cloud.base_url!r}')
         lines.append("")
     if config.local.cache_dir:

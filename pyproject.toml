@@ -28,7 +28,7 @@ classifiers = [
 iosis = "iosisclient.cli:main"
 
 [project.urls]
-Homepage = "https://tryiosis.vercel.app"
+Homepage = "https://iosis.dev"
 Repository = "https://github.com/iosis-quant/iosisclient"
 
 [tool.setuptools]

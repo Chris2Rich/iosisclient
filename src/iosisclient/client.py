@@ -93,7 +93,7 @@ class IosisClient:
         self.base_url = (
             base_url
             or os.environ.get("IOSIS_BASE_URL")
-            or "https://tryiosis.vercel.app"
+            or "https://iosis.dev"
         ).rstrip("/")
 
     def _get(self, path: str) -> Any:
