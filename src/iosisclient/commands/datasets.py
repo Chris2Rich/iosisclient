@@ -18,11 +18,14 @@ def datasets(args: object, config: Config) -> int:
 
     rows = []
     for ds in items:
+        manifest = ds.get("manifest") if isinstance(ds, dict) else None
+        if not isinstance(manifest, dict):
+            manifest = {}
         rows.append([
             ds.get("name", ""),
-            ds.get("version", ""),
-            str(ds.get("row_count", "")),
-            ds.get("path", "")[:50],
+            str(manifest.get("row_count", "")),
+            manifest.get("resolution", ""),
+            manifest.get("path", "")[:50],
         ])
-    print_table(rows, ["Name", "Version", "Rows", "Path"])
+    print_table(rows, ["Name", "Rows", "Resolution", "Path"])
     return 0

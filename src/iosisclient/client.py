@@ -50,21 +50,30 @@ class Artifact:
 @dataclass(frozen=True)
 class DatasetManifest:
     name: str
-    version: str
-    id: str
     path: str
-    row_count: int
     schema: dict[str, Any] = field(default_factory=dict)
+    time_range: tuple[str, str] | None = None
+    resolution: str = ""
+    row_count: int = 0
+    bytes: int = 0
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> DatasetManifest:
+        time_range_raw = data.get("time_range")
+        time_range: tuple[str, str] | None = None
+        if isinstance(time_range_raw, dict):
+            start = time_range_raw.get("start")
+            end = time_range_raw.get("end")
+            if isinstance(start, str) and isinstance(end, str):
+                time_range = (start, end)
         return cls(
             name=data.get("name", ""),
-            version=data.get("version", ""),
-            id=data.get("id", ""),
             path=data.get("path", ""),
-            row_count=data.get("row_count", 0),
             schema=data.get("schema", {}),
+            time_range=time_range,
+            resolution=data.get("resolution", ""),
+            row_count=data.get("row_count", 0),
+            bytes=data.get("bytes", 0),
         )
 
 
@@ -192,10 +201,9 @@ class IosisClient:
     def list_dataset_manifests(self) -> Any:
         return self._get("/api/datasets/manifest")
 
-    def lookup_dataset(self, name: str, version: str = "latest") -> Any:
+    def lookup_dataset(self, name: str) -> Any:
         name_enc = urllib.parse.quote(name, safe="")
-        ver_enc = urllib.parse.quote(version, safe="")
-        return self._get(f"/api/datasets/lookup?name={name_enc}&data_version={ver_enc}")
+        return self._get(f"/api/datasets/lookup?name={name_enc}")
 
     def list_tsfns(self) -> Any:
         return self._get("/api/tsfns")

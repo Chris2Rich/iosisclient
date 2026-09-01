@@ -91,16 +91,16 @@ URLs expire after 5 minutes. Download immediately.
 
 ### `list_datasets()`
 
-List all published dataset names and versions:
+List all published dataset names:
 
 ```python
 datasets = client.list_datasets()
-# {"datasets": [{"name": "prices", "versions": ["2026-01-15"], "latestVersion": "2026-01-15"}]}
+# {"datasets": [{"name": "prices"}]}
 ```
 
 **Endpoint:** `GET /api/datasets`
 
-The `name` field from these results can be used directly as the `path` parameter in `source.parquet` nodes in strategy YAML (see Strategy Format below).
+The `name` field from these results can be used directly as the `name` parameter in `source.dataset` nodes in strategy YAML (see Strategy Format below).
 
 ### `list_dataset_manifests()`
 
@@ -108,21 +108,21 @@ List datasets with full manifests (schema, row count, resolution, coverage windo
 
 ```python
 manifests = client.list_dataset_manifests()
-# {"datasets": [{"name": "prices", "versions": [...], "manifest": {"rows": 50000, "schema": {...}, ...}}]}
+# {"datasets": [{"name": "prices", "manifest": {"path": "s3://...", "row_count": 50000, "schema": {...}, ...}}]}
 ```
 
 **Endpoint:** `GET /api/datasets/manifest`
 
-### `lookup_dataset(name, version="latest")`
+### `lookup_dataset(name)`
 
-Look up a single dataset by name. Pass `"latest"` or an ISO-8601 date for calendar versioning:
+Look up a single dataset by name:
 
 ```python
-info = client.lookup_dataset("prices", version="2026-01-15")
-# {"dataset": {"name": "prices", "version": "2026-01-15", "rows": 50000, "schema": {...}}}
+info = client.lookup_dataset("prices")
+# {"dataset": {"name": "prices", "path": "s3://...", "row_count": 50000, "schema": {...}}}
 ```
 
-**Endpoint:** `GET /api/datasets/lookup?name=:name&data_version=:version`
+**Endpoint:** `GET /api/datasets/lookup?name=:name`
 
 ---
 
