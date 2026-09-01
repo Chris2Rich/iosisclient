@@ -1,6 +1,6 @@
 # iosisClient
 
-Thin Python client for the [Iosis](https://iosis.dev) API. The client module uses only stdlib; the package depends on `iosislib`.
+Thin Python client for the [Iosis](https://iosis.dev) API. The `client` module uses only stdlib; the package depends on `iosislib` for local graph execution and strategy validation.
 
 ```bash
 pip install iosisclient
@@ -54,7 +54,7 @@ run = client.get_run("8f3c...")
 # {"run": {"id": "8f3c...", "status": "succeeded", "result": {...}, "artifacts": [...]}}
 ```
 
-Status is one of `queued`, `running`, `succeeded`, or `failed`. Artifact URLs are signed and expire after 60 seconds.
+Status is one of `queued`, `running`, `succeeded`, or `failed`. Artifact URLs are signed and expire after 5 minutes.
 
 **Endpoint:** `GET /api/runs/:runId`
 
@@ -162,6 +162,65 @@ with open("graph.svg", "w") as f:
 ```
 
 **Endpoint:** `POST /api/graphs/render` (Content-Type: `application/yaml`, returns `image/svg+xml`)
+
+---
+
+## Strategy Schema
+
+### `get_strategy_schema()`
+
+Fetch the JSON Schema for the `iosis.strategy` format:
+
+```python
+schema = client.get_strategy_schema()
+# {"$schema": "https://json-schema.org/draft/2020-12/schema", ...}
+```
+
+**Endpoint:** `GET /api/schema/strategy`
+
+---
+
+## Artifact Downloads
+
+### `download_artifacts(run_id, dest_dir, chart_names=None)`
+
+Download result and chart artifacts for a completed run:
+
+```python
+paths = client.download_artifacts("8f3c...", "./output")
+# [PosixPath('output/result.parquet'), PosixPath('output/chart.close.svg')]
+```
+
+Optional `chart_names` filter limits which charts to download.
+
+### `download_charts(run_id, dest_dir)`
+
+Download only chart artifacts:
+
+```python
+charts = client.download_charts("8f3c...", "./charts")
+```
+
+---
+
+## CLI
+
+The package installs an `iosis` command:
+
+```bash
+iosis init <api_key>          # store API key in config
+iosis run local <strategy.yaml> [-o result.parquet] [--no-cache]
+iosis run cloud <strategy.yaml> [-d ./artifacts]
+iosis validate <strategy.yaml>
+iosis catalog [local|cloud]
+iosis datasets
+iosis status <run_id>
+iosis render <strategy.yaml> [-o graph.svg]
+iosis cache info
+iosis cache clear
+```
+
+`run local` executes via `iosislib` locally. `run cloud` submits to the Iosis API.
 
 ---
 
